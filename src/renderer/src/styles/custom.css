@@ -110,10 +110,7 @@
   order: 3;
 }
 
-#app-list li {
-  user-select: none;
-  transition: background-color 0.3s ease-in-out;
-}
+
 
 /* Cuando está marcado → tachado e itálico */
 #app-list li input:checked ~ label {

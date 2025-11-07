@@ -1,4 +1,3 @@
-// src/main/index.js
 import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
@@ -6,142 +5,150 @@ import icon from '../../resources/icon.png?asset'
 
 import { StoreManager } from './StoreManager.js'
 
-
+// la ventana principal
 let mainWindow
 
 function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
-    show: false,
-    autoHideMenuBar: true,
-    ...(process.platform === 'linux' ? { icon } : {}),
-    webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
-    }
-  })
+  mainWindow = new BrowserWindow({
+    width: 900,
+    height: 670,
+    show: false,
+    autoHideMenuBar: true,
+    ...(process.platform === 'linux' ? { icon } : {}),
+    webPreferences: {
+      // aqui le decimos q use el script de preload
+      preload: join(__dirname, '../preload/index.js'),
+      sandbox: false
+    }
+  })
 
-  mainWindow.on('ready-to-show', () => {
-    mainWindow.show()
-  })
+  // para q no se vea la ventana hasta q este lista
+  mainWindow.on('ready-to-show', () => {
+    mainWindow.show()
+  })
 
-  mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
-    return { action: 'deny' }
-  })
+  // para q los enlaces se abran en el navegador 
+  mainWindow.webContents.setWindowOpenHandler((details) => {
+    shell.openExternal(details.url)
+    return { action: 'deny' }
+  })
 
-  // HMR for renderer base on electron-vite cli.
-  // Load the remote URL for development or the local html file for production.
-  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
-    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
-  } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
-  }
+  // Carga la URL de desarrollo (vite) o el html en producion.
+  if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+    mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+  } else {
+    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+  }
 }
 
+// cuando la app esta lista
 app.whenReady().then(() => {
-  // Set app user model id for windows
-  electronApp.setAppUserModelId('com.electron')
+  electronApp.setAppUserModelId('com.electron')
 
-  // Default open or close DevTools by F12 in development
-  app.on('browser-window-created', (_, window) => {
-    optimizer.watchWindowShortcuts(window)
-  })
+  // Para abrir las devtools con F12
+  app.on('browser-window-created', (_, window) => {
+    optimizer.watchWindowShortcuts(window)
+  })
 
-  createWindow()
+  createWindow()
 
-  app.on('activate', function () {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
-  })
+  // para macos
+  app.on('activate', function () {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+  })
 })
 
+// Cerrar la app del todo si no estamos en mac
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
+  if (process.platform !== 'darwin') {
+    app.quit()
+  }
 })
 
-// Register events
-const store = new StoreManager({ name: 'app-data' })
-
-// CAMBIAR TÍTULO DE VENTANA (AÑADIDO)
+// --- Aqui empiezan los eventos ipc (la chicha) ---
+const store = new StoreManager({ name: 'app-data' }) 
+// Cambia el titulo de la ventana 
 ipcMain.on('window:set-title', (event, title) => {
   if (mainWindow) {
     mainWindow.setTitle(title);
   }
 });
 
+// cuando el renderer pide la lista de tareas
 ipcMain.handle('store:get-list', async () => {
-  try {
-    const list = await store.getList()
-    mainWindow.send('list-updated', list)
-  } catch (error) {
-    console.error(error)
-  }
+  try {
+    const list = await store.getList()
+    // mandamos la lista actualizada a la ventana con 'list-updated'
+    mainWindow.send('list-updated', list)
+  } catch (error) {
+    console.error(error)
+  }
 })
 
-// GET ITEM (ID)
+// pillar solo 1 tarea por id
 ipcMain.handle('store:get-item', async (event, itemId) => {
-  return await store.getItem(itemId)
+  return await store.getItem(itemId)
 })
 
-// ADD ITEM
+// añadir tarea y avisar a todos (list-updated)
 ipcMain.on('store:add-item', (event, item) => {
-  mainWindow.send('list-updated', store.addItem(item))
+  mainWindow.send('list-updated', store.addItem(item))
 })
 
-// DELETE ITEM (CORREGIDO CON .title)
+// dialogo de borrar
 ipcMain.handle('store:delete-item', async (event, item) => {
-  const result = await dialog.showMessageBox(mainWindow, {
-    type: 'warning',
-    title: `Borrar ${item.title}`, // CORREGIDO
-    message: `¿Borrar '${item.title}' de la lista?`, // CORREGIDO
-    buttons: ['Cancelar', 'BORRAR'],
-    cancelId: 0,
-    defaultId: 1
-  })
+  const result = await dialog.showMessageBox(mainWindow, {
+    type: 'warning',
+    title: `Borrar ${item.title}`,// arreglado, antes ponia item.name y salia undefined
+    message: `¿Borrar '${item.title}' de la lista?`,
+    buttons: ['Cancelar', 'BORRAR'],
+    cancelId: 0, //  0 es cancelar
+    defaultId: 1 //  1 es borrar
+  })
 
-  if (result.response === 1) {
-    console.log('Borrando', item)
-    mainWindow.send('list-updated', store.deleteItem(item))
-    return true
-  }
+  // si pulsa 'BORRAR' (q es el boton 1)
+  if (result.response === 1) {
+    console.log('Borrando', item)
+    mainWindow.send('list-updated', store.deleteItem(item))
+    return true // devolvemos true al renderer para q sepa q se borro
+  }
 })
 
-//DIALOGO
+// un dialogo generico (para errores y tal)
 ipcMain.handle('show-dialog', async (event, { type, message }) => {
-  const win = BrowserWindow.getFocusedWindow()
-  await dialog.showMessageBox(win, {
-    type: type, // 'info', 'error', 'warning', etc.
-    message: message
-  })
+  const win = BrowserWindow.getFocusedWindow()
+  await dialog.showMessageBox(win, {
+    type: type,
+    message: message
+  })
 })
 
-// UPDATE ITEM
+// actualizar y avisar
 ipcMain.on('store:update-item', (event, item) => {
-  mainWindow.send('list-updated', store.updateItem(item))
+  mainWindow.send('list-updated', store.updateItem(item))
 })
 
-// CONFIRM ITEM
+// dialogo para descartar cambios (el de editar/volver)
 ipcMain.handle('store:confirm-item', async (event, item) => {
-  const result = await dialog.showMessageBox(mainWindow, {
-    type: 'question',
-    title: `Hay cambios sin guardar`,
-    message: `¿Seguro que deseas descartar los cambios?`,
-    detail: 'Se perderán los cambios realizados en el producto.',
-    buttons: ['Cancelar', 'Guardar', 'Descartar'],
-    cancelId: 0,
-    defaultId: 2
-  })
+  const result = await dialog.showMessageBox(mainWindow, {
+    type: 'question',
+    title: `Hay cambios sin guardar`,
+    message: `¿Seguro que deseas descartar los cambios?`,
+    detail: 'Se perderán los cambios realizados en el producto.',
+    buttons: ['Cancelar', 'Guardar', 'Descartar'],
+    cancelId: 0,
+    defaultId: 2
+  })
 
-  switch (result.response) {
-    case 0:
-      return 'cancel'
-    case 1:
-      mainWindow.send('list-updated', store.updateItem(item))
-      return 'save'
-    case 2:
-      return 'discard'
-  }
+  // devuelve al renderer q boton ha pulsao
+  switch (result.response) {
+    case 0:
+      return 'cancel' 
+    case 1:
+      // si le da a guardar, la guardamos y avisamos
+      mainWindow.send('list-updated', store.updateItem(item))
+      return 'save' 
+    case 2:
+      return 'discard' 
+  }
 })
