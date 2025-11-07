@@ -33,6 +33,7 @@ export default function TaskFilters({ filterCallback }) {
       </label>
 
       {/* 3. (AÑADIDO) El nuevo selector de ordenación */}
+      <br/>
       <select id="sort-by" onChange={applyFilters} className="form-select ms-auto" style={{ width: 'auto' }}>
         <option value="id">Ordenar por (Defecto)</option>
         <option value="title">Ordenar por Título</option>

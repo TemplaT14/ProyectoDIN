@@ -82,22 +82,23 @@ ipcMain.on('store:add-item', (event, item) => {
   mainWindow.send('list-updated', store.addItem(item))
 })
 
+
 // DELETE ITEM
 ipcMain.handle('store:delete-item', async (event, item) => {
-  const result = await dialog.showMessageBox(mainWindow, {
-    type: 'warning',
-    title: `Borrar ${item.name}`,
-    message: `¿Borrar '${item.name}' de la lista?`,
-    buttons: ['Cancelar', 'BORRAR'],
-    cancelId: 0,
-    defaultId: 1
-  })
+  const result = await dialog.showMessageBox(mainWindow, {
+    type: 'warning',
+    title: `Borrar ${item.title}`, // <-- CORREGIDO
+    message: `¿Borrar '${item.title}' de la lista?`, // <-- CORREGIDO
+    buttons: ['Cancelar', 'BORRAR'],
+    cancelId: 0,
+    defaultId: 1
+  })
 
-  if (result.response === 1) {
-    console.log('Borrando', item)
-    mainWindow.send('list-updated', store.deleteItem(item))
-    return true
-  }
+  if (result.response === 1) {
+    console.log('Borrando', item)
+    mainWindow.send('list-updated', store.deleteItem(item))
+    return true
+  }
 })
 
 //DIALOGO

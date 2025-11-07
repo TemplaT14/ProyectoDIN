@@ -7,23 +7,25 @@ export default function TaskRow({ task }) {
   const navigate = useNavigate()
   const [dialog, setDialog] = useState(null)
 
-  function handleDelete() {
-    setDialog({
-      message: '¿Deseas borrar esta tarea?',
-      onConfirm: async () => {
-        try {
-          const confirm = await window.api.deleteItem(task)
-          if (confirm) {
-            window.api.getList()
-            setDialog({ message: 'Tarea eliminada correctamente', onClose: () => setDialog(null) })
-          }
-        } catch (err) {
-          console.error(err)
-          setDialog({ message: 'Error al borrar la tarea' })
-        }
-      }
-    })
-  }
+// renderer/src/components/TaskRow.jsx (Corregido)
+
+  async function handleDelete() {
+    try {
+      // 1. Llama directamente a la API (esto mostrará el diálogo nativo)
+      const confirm = await window.api.deleteItem(task) 
+
+      // 2. Si el usuario pulsó "BORRAR" en el diálogo nativo...
+      if (confirm) {
+        window.api.getList() // ...refresca la lista
+        // 3. (Opcional) Muestra un mensaje de éxito rápido en React
+        setDialog({ message: 'Tarea eliminada correctamente', onClose: () => setDialog(null) })
+      }
+      // Si 'confirm' es falso (el usuario pulsó "Cancelar"), no hace nada.
+    } catch (err) {
+      console.error(err)
+      setDialog({ message: 'Error al borrar la tarea' })
+    }
+  }
 
   return (
     <>
