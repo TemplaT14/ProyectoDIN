@@ -10,7 +10,6 @@ const api = {
   updateItem: (item) => ipcRenderer.send('store:update-item', item),
   confirmItem: (item) => ipcRenderer.invoke('store:confirm-item', item),
   showDialog: (type, message) => ipcRenderer.invoke('show-dialog', { type, message })
-
 }
 
 // Use `contextBridge` APIs to expose Electron APIs to

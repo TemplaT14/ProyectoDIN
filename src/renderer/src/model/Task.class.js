@@ -4,6 +4,7 @@ export default class Task {
     this.title = title
     this.description = description
     this.state = state // "Pendiente", "En proceso", "Completada", "Cancelada"
-    this.dueDate = dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 7 días por defecto
+    this.dueDate =
+      dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // 7 días por defecto
   }
 }

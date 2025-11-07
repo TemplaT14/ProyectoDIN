@@ -5,7 +5,6 @@ import icon from '../../resources/icon.png?asset'
 
 import { StoreManager } from './StoreManager.js'
 
-
 let mainWindow
 
 function createWindow() {
