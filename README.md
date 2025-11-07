@@ -4,7 +4,7 @@ Aplicación de escritorio para gestionar una lista de tareas pendientes.
 
 Realizada con **_Electron_**, **_React_** y **_Vite_** para el módulo de **Desarrollo de Interfaces** de **2º DAM**.
 
-![Captura de pantalla de la app](./doc/Screen.png)
+![Captura de pantalla de la app](./doc/Screen.png),(./doc/Screen2.png),(./doc/Screen3.png),(./doc/Screen4.png)
 
 ## Instalación de dependencias
 
