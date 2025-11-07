@@ -6,8 +6,7 @@ import ModalDialog from './ModalDialog'
 export default function TaskRow({ task }) {
   const navigate = useNavigate()
   const [dialog, setDialog] = useState(null)
-  // 1. (AÑADIDO) Estado para controlar el desplegable
-  const [isOpen, setIsOpen] = useState(false)
+  const [isOpen, setIsOpen] = useState(false) // (SE MANTIENE) Para el desplegable de descripción
 
   async function handleDelete() {
     try {
@@ -22,6 +21,20 @@ export default function TaskRow({ task }) {
     }
   }
 
+  // 1. (AÑADIDO) Nueva función para manejar el <select>
+  async function handleStateChange(e) {
+    const newState = e.target.value;
+    try {
+      await window.api.updateItem({ ...task, state: newState });
+      window.api.getList(); // Dispara la recarga de la lista
+      setDialog({ message: `Estado cambiado a ${newState}` });
+    } catch (err) {
+      console.error(err);
+      setDialog({ message: 'Error al cambiar el estado' });
+    }
+  }
+
+
   return (
     <>
       {dialog && (
@@ -35,45 +48,64 @@ export default function TaskRow({ task }) {
                 }
               : null
           }
-          // Corrección del bug de navegación que encontramos antes
           onClose={() => {
-            if (dialog.onClose) dialog.onClose();
-            setDialog(null);
-          }}
+            if (dialog.onClose) dialog.onClose();
+            setDialog(null);
+          }}
         />
       )}
 
-      {/* 2. (MODIFICADO) El 'li' ya no es d-flex, solo es el contenedor */}
       <li className="list-group-item">
-        {/* Este div interno mantiene la fila principal */}
-        <div className="d-flex justify-content-between align-items-center gap-2">
-          <div
-            style={{ cursor: 'pointer' }}
-            // 3. (CAMBIADO) El onClick ahora abre/cierra el desplegable
-            onClick={() => setIsOpen(!isOpen)} 
-          >
-            <strong>{task.title}</strong> - <em>{task.state}</em> - <small>{task.dueDate}</small>
-          </div>
-          <div>
-            <button className="btn btn-sm btn-primary" onClick={() => navigate(`/edit/${task.id}`)}>
-              Editar
-            </button>
-            <button className="btn btn-sm btn-danger" onClick={handleDelete}>
-              Borrar
-            </button>
-          </div>
-        </div>
+        <div className="d-flex justify-content-between align-items-center gap-2">
+          
+          {/* 2. (MODIFICADO) Lado izquierdo (Título, Select de Estado, Fecha) */}
+          <div
+            // Usamos flex-grow-1 para que ocupe el espacio
+            className="d-flex align-items-center gap-2 flex-grow-1"
+            style={{ cursor: 'pointer' }}
+            onClick={() => setIsOpen(!isOpen)} 
+          >
+            <strong>{task.title}</strong>
 
-        {/* 4. (AÑADIDO) El bloque desplegable que muestra la descripción */}
-        {isOpen && (
-          <div className="mt-2 p-2 rounded" style={{ backgroundColor: 'var(--bs-tertiary-bg)' }}>
-            <p className="mb-1"><strong>Descripción:</strong></p>
-            {/* Usamos 'pre-wrap' para respetar saltos de línea en la descripción */}
-            <p className="mb-0" style={{ whiteSpace: 'pre-wrap' }}>
-              {task.description || <i>(Sin descripción)</i>}
-            </p>
-          </div>
-        )}
+            {/* 3. (AÑADIDO) El <select> para cambiar estado */}
+            <select
+              className="form-select form-select-sm"
+              style={{ width: '150px' }} // Ancho fijo para el select
+              value={task.state}
+              onChange={handleStateChange}
+              // Previene que el clic abra el desplegable de descripción
+              onClick={(e) => e.stopPropagation()} 
+            >
+              <option value="Pendiente">Pendiente</option>
+              <option value="En proceso">En proceso</option>
+              <option value="Completada">Completada</option>
+              <option value="Cancelada">Cancelada</option>
+            </select>
+
+            {/* Usamos ms-auto para empujar la fecha a la derecha de este div */}
+            <small className="ms-auto">{task.dueDate}</small> 
+          </div>
+
+          {/* Lado derecho (Botones) - Sin cambios */}
+          <div>
+            <button className="btn btn-sm btn-primary" onClick={() => navigate(`/edit/${task.id}`)}>
+              Editar
+            </button>
+            <button className="btn btn-sm btn-danger" onClick={handleDelete}>
+              Borrar
+            </button>
+          </div>
+        </div>
+
+        {/* 4. (SE MANTIENE) El bloque desplegable de descripción */}
+        {isOpen && (
+          <div className="mt-2 p-2 rounded" style={{ backgroundColor: 'var(--bs-tertiary-bg)' }}>
+            <p className="mb-1"><strong>Descripción:</strong></p>
+            <p className="mb-0" style={{ whiteSpace: 'pre-wrap' }}>
+              {task.description || <i>(Sin descripción)</i>}
+            </p>
+          </div>
+        )}
       </li>
     </>
   )
