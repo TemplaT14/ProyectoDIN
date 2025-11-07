@@ -21,7 +21,9 @@ export default function TaskList() {
       console.error(err)
     }
   }
+
   useEffect(() => {
+    window.api.setTitle('Listado de Tareas') 
     fetchList()
     window.electron.ipcRenderer.on('list-updated', handleUpdateList)
     return () => window.electron.ipcRenderer.removeListener('list-updated', handleUpdateList)
@@ -66,7 +68,6 @@ export default function TaskList() {
       <TaskFilters filterCallback={handleFilters} />
 
       <ul className="list-group">
-        {/* 1. (AÑADIDO) Encabezado de la lista */}
         <li 
           className="list-group-item" 
           style={{ 
@@ -76,20 +77,13 @@ export default function TaskList() {
         >
           <div className="d-flex justify-content-between align-items-center gap-2">
             
-            {/* Lado izquierdo (Títulos) - Imita la estructura de TaskRow */}
             <div className="d-flex align-items-center gap-2 flex-grow-1">
-              {/* Título */}
+              <i className="bi bi-chevron-right" style={{ visibility: 'hidden' }}></i>
               <span>Título</span>
-              
-              {/* Estado */}
               <span style={{ width: '150px' }}>Estado</span>
-              
-              {/* Fecha Límite (alineada a la derecha de este bloque) */}
               <span className="ms-auto">Fecha Límite</span>
             </div>
 
-            {/* Lado derecho (Espacio para botones) */}
-            {/* Usamos 'visibility: hidden' para que ocupe espacio y alinee, pero no se vea */}
             <div style={{ visibility: 'hidden' }}>
               <button className="btn btn-sm btn-primary">Editar</button>
               <button className="btn btn-sm btn-danger">Borrar</button>
@@ -97,12 +91,9 @@ export default function TaskList() {
           </div>
         </li>
 
-        {/* 2. (EXISTENTE) Mensaje de lista vacía */}
         {tasks.length === 0 && (
           <li className="list-group-item text-muted text-center">No hay tareas que mostrar</li>
         )}
-        
-        {/* 3. (EXISTENTE) Mapeo de tareas */}
         {tasks.map((task) => (
           <TaskRow key={task.id} task={task} />
         ))}

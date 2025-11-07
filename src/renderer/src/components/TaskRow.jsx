@@ -60,13 +60,10 @@ export default function TaskRow({ task }) {
             style={{ cursor: 'pointer' }}
             onClick={() => setIsOpen(!isOpen)} 
           >
-            {/* 1. (AÑADIDO) Flecha para el desplegable */}
             <i className={`bi ${isOpen ? 'bi-chevron-down' : 'bi-chevron-right'}`}></i>
 
-            {/* 2. (EXISTENTE) Título */}
             <strong>{task.title}</strong>
 
-            {/* 3. (EXISTENTE) Select de Estado */}
             <select
               className="form-select form-select-sm"
               style={{ width: '150px' }} 
@@ -95,10 +92,10 @@ export default function TaskRow({ task }) {
 
         {isOpen && (
           <div className="mt-2 p-2 rounded" style={{ backgroundColor: 'var(--bs-tertiary-bg)' }}>
-          <p className="mb-1"><strong>Descripción:</strong></p>
+            <p className="mb-1"><strong>Descripción:</strong></p>
             <p className="mb-0" style={{ whiteSpace: 'pre-wrap' }}>
               {task.description || <i>(Sin descripción)</i>}
-           </p>
+            </p>
           </div>
         )}
       </li>
