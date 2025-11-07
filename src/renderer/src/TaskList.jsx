@@ -7,15 +7,15 @@ import { useNavigate } from 'react-router-dom'
 export default function TaskList() {
   const [tasks, setTasks] = useState([])
   const [filters, setFilters] = useState({
-    title: '',
-    state: '',
+    // 'title' y 'state' eliminados del estado
     showCompleted: true,
     showCancelled: true,
-    sortBy: 'id' // 1. (AÑADIDO) Estado inicial de ordenación
+    sortBy: 'id' 
   })
   const navigate = useNavigate()
 
   async function fetchList() {
+    // ... (El resto de la función es igual)
     try {
       await window.api.getList()
     } catch (err) {
@@ -24,39 +24,39 @@ export default function TaskList() {
     }
   }
   useEffect(() => {
+    // ... (Esta función es igual)
     fetchList()
     window.electron.ipcRenderer.on('list-updated', handleUpdateList)
     return () => window.electron.ipcRenderer.removeListener('list-updated', handleUpdateList)
   }, [])
 
   function handleUpdateList(event, list, appliedFilters = filters) {
-    // 2. (CAMBIADO) Llamar a la nueva función
     setTasks(getFilteredAndSortedList(list, appliedFilters))
   }
 
-  // 3. (RENOMBRADO Y MODIFICADO) Ahora filtra Y ordena
   function getFilteredAndSortedList(list, appliedFilters) {
     
-    // --- Lógica de filtrado (sin cambios) ---
     const filtered = list.filter((task) => {
-      let match = task.title.toLowerCase().includes(appliedFilters.title.toLowerCase())
+      // 1. (CAMBIADO) La condición inicial ahora es 'true'
+      let match = true 
+      
+      // 2. (SIN CAMBIOS) Sigue filtrando por checkboxes
       if (!appliedFilters.showCompleted) match = match && task.state !== 'Completada'
       if (!appliedFilters.showCancelled) match = match && task.state !== 'Cancelada'
-      if (appliedFilters.state) match = match && task.state === appliedFilters.state
+
+      // 3. (ELIMINADO) La línea 'if (appliedFilters.state)...' se ha borrado
+      
       return match
     })
 
-    // --- 4. (AÑADIDO) Lógica de ordenación ---
+    // --- Lógica de ordenación (Sin cambios) ---
     const sortBy = appliedFilters.sortBy || 'id'
 
     if (sortBy === 'id') {
-      // Ordena por ID (timestamp, que es un número)
       return filtered.sort((a, b) => a.id - b.id)
     }
     
-    // Ordena por 'title', 'state', o 'dueDate' (que son strings)
     return filtered.sort((a, b) => {
-      // Usamos || '' para evitar errores si algún valor es null/undefined
       const valA = (a[sortBy] || '').toLowerCase() 
       const valB = (b[sortBy] || '').toLowerCase()
       return valA.localeCompare(valB)
@@ -64,6 +64,7 @@ export default function TaskList() {
   }
 
   function handleFilters(newFilters) {
+    // ... (Esta función es igual)
     setFilters(newFilters)
     window.api.getList()
     window.electron.ipcRenderer.once('list-updated', (event, list) => {
@@ -73,12 +74,13 @@ export default function TaskList() {
 
   return (
     <div className="container">
+      {/* ... (El resto del JSX es igual) ... */}
       <h1 className="text-primary">Listado de tareas</h1>
       <button className="btn btn-success mb-2" onClick={() => navigate('/new')}>
         Nueva tarea
       </button>
       <TaskFilters filterCallback={handleFilters} />
-      <ul className="list-group">
+  _     <ul className="list-group">
         {tasks.length === 0 && (
           <li className="list-group-item text-muted text-center">No hay tareas que mostrar</li>
         )}
