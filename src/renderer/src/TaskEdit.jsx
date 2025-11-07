@@ -7,21 +7,28 @@ import ModalDialog from './components/ModalDialog'
 export default function TaskEdit() {
   const { taskId } = useParams()
   const [task, setTask] = useState({})
-  const [originalTask, setOriginalTask] = useState({})
+  const [originalTask, setOriginalTask] = useState({}) // Ya teníamos esto
   const [dialog, setDialog] = useState(null)
   const navigate = useNavigate()
+
+  // 1. (AÑADIDO) Calculamos si hay cambios
+  // Comparamos los strings de la tarea original y la actual
+  const hasChanges = JSON.stringify(task) !== JSON.stringify(originalTask)
 
   useEffect(() => {
   	if (!taskId) return
   	window.api.getItem(taskId).then((itemFetched) => {
   		setTask({ ...itemFetched })
-  		setOriginalTask({ ...itemFetched })
-  		window.api.setTitle(`Editando: ${itemFetched.title}`) // Esto cambia el título de la VENTANA
+  		setOriginalTask({ ...itemFetched }) // Guardamos la copia original
+  		window.api.setTitle(`Editando: ${itemFetched.title}`)
   	})
   }, [taskId])
 
   function handleSave(e) {
   	e.preventDefault()
+    // (MODIFICADO) Añadimos comprobación por si acaso
+  	if (!hasChanges) return 
+
   	if (!task.title.trim()) {
   		setDialog({ message: 'El título no puede estar vacío' })
   		return
@@ -54,7 +61,8 @@ export default function TaskEdit() {
   }
 
   async function handleBack() {
-  	if (JSON.stringify(task) !== JSON.stringify(originalTask)) {
+    // (MODIFICADO) Usamos la variable 'hasChanges' que ya calculamos
+  	if (hasChanges) {
   		const result = await window.api.confirmItem(task)
   		if (result === 'discard' || result === 'save') navigate('/')
   	} else {
@@ -86,8 +94,10 @@ export default function TaskEdit() {
   			setTask={setTask}
   			onSubmit={handleSave}
   			onDiscard={handleBack}
-  			// (AÑADIDO) Pasamos el título de la tarea al formulario
   			formTitle={`Editando: ${task.title || '...'}`}
+            // 2. (AÑADIDO) Pasamos las nuevas props
+  			discardButtonText="Volver"
+  			isSaveDisabled={!hasChanges} 
   		/>
   	</>
   )
