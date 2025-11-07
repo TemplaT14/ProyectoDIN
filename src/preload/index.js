@@ -1,8 +1,17 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
 // Custom APIs for renderer
-const api = {}
+const api = {
+  getList: () => ipcRenderer.invoke('store:get-list'),
+  getItem: (itemId) => ipcRenderer.invoke('store:get-item', itemId),
+  addItem: (item) => ipcRenderer.send('store:add-item', item),
+  deleteItem: (item) => ipcRenderer.invoke('store:delete-item', item),
+  updateItem: (item) => ipcRenderer.send('store:update-item', item),
+  confirmItem: (item) => ipcRenderer.invoke('store:confirm-item', item),
+  showDialog: (type, message) => ipcRenderer.invoke('show-dialog', { type, message })
+
+}
 
 // Use `contextBridge` APIs to expose Electron APIs to
 // renderer only if context isolation is enabled, otherwise

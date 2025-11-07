@@ -1,0 +1,147 @@
+/* Colores personalizados */
+:root {
+  --primary: #55a;
+  --secondary: #555;
+  --danger: #a55;
+  --success: #5a5;
+  --info: #5aa;
+  --warning: #ea5;
+  --light: #eee;
+  --dark: #333;
+}
+
+/* 🌙 Modo oscuro opcional */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary: #fff;
+    --secondary: #555;
+    --danger: #a55;
+    --success: #5a5;
+    --info: #5aa;
+    --warning: #ea5;
+    --light: #eee;
+    --dark: #111;
+  }
+}
+
+/* ----- LAYOUT GENERAL ----- */
+
+#app {
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  max-width: 800px;
+}
+
+@media (max-width: 768px) {
+  #app {
+    flex-direction: column;
+  }
+}
+
+#app-header {
+  order: 0;
+}
+
+#app-item-input {
+  order: 1;
+}
+
+/* ----- INPUTS ----- */
+
+#app-item-input input[type='text'] {
+  transition: border-color 0.3s ease-in-out;
+}
+
+#app-item-input input[type='text']:focus {
+  outline: none;
+}
+
+#app-item-input input[type='text']::placeholder {
+  font-style: italic;
+  opacity: 0.5;
+}
+
+/* ----- FILTROS ----- */
+
+#app-filters {
+  order: 2;
+}
+
+#app-filters .input-group {
+  width: auto;
+}
+
+/* Checkbox oculto con iconos de alternancia */
+.filter-completed {
+  transition: background-color 0.3s ease-in-out;
+}
+
+.filter-completed label {
+  display: grid;
+  grid-template-columns: auto auto;
+  cursor: pointer;
+  transition: all 0.3s ease-in-out;
+}
+
+#filter-hide-completed {
+  display: none;
+}
+
+#filter-hide-completed ~ label .icon-hidden {
+  display: none;
+}
+
+#filter-hide-completed:checked ~ label .icon-visible {
+  display: none;
+}
+
+#filter-hide-completed:checked ~ label .icon-hidden {
+  display: inline;
+}
+
+/* ----- LISTA DE ITEMS ----- */
+
+#app-list {
+  order: 3;
+}
+
+#app-list li {
+  user-select: none;
+  transition: background-color 0.3s ease-in-out;
+}
+
+/* Cuando está marcado → tachado e itálico */
+#app-list li input:checked ~ label {
+  text-decoration: line-through;
+  font-style: italic;
+}
+
+/* Resaltado de <em> dentro del label */
+#app-list li label em {
+  font-style: italic;
+  font-weight: bold;
+  background-color: #ffe69c; /* equivalente a lighten($warning, 25%) */
+  border-radius: 5px;
+}
+
+/* Botones de editar / eliminar */
+#app-list li button {
+  transition:
+    background-color 0.3s ease-in-out,
+    color 0.3s ease-in-out;
+}
+
+#app-list li button.edit:hover {
+  background-color: var(--primary);
+  color: white;
+}
+
+#app-list li button.delete:hover {
+  background-color: var(--danger);
+  color: white;
+}

@@ -1,11 +1,15 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, dialog } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 
+import { StoreManager } from './StoreManager.js'
+
+
+let mainWindow
+
 function createWindow() {
-  // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 900,
     height: 670,
     show: false,
@@ -35,40 +39,101 @@ function createWindow() {
   }
 }
 
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
   // Set app user model id for windows
   electronApp.setAppUserModelId('com.electron')
 
   // Default open or close DevTools by F12 in development
-  // and ignore CommandOrControl + R in production.
-  // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
-
   createWindow()
 
   app.on('activate', function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
 })
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
+// Register events
+const store = new StoreManager({ name: 'app-data' })
+
+ipcMain.handle('store:get-list', async () => {
+  try {
+    const list = await store.getList()
+    mainWindow.send('list-updated', list)
+  } catch (error) {
+    console.error(error)
+  }
+})
+
+// GET ITEM (ID)
+ipcMain.handle('store:get-item', async (event, itemId) => {
+  return await store.getItem(itemId)
+})
+
+// ADD ITEM
+ipcMain.on('store:add-item', (event, item) => {
+  mainWindow.send('list-updated', store.addItem(item))
+})
+
+// DELETE ITEM
+ipcMain.handle('store:delete-item', async (event, item) => {
+  const result = await dialog.showMessageBox(mainWindow, {
+    type: 'warning',
+    title: `Borrar ${item.name}`,
+    message: `¿Borrar '${item.name}' de la lista?`,
+    buttons: ['Cancelar', 'BORRAR'],
+    cancelId: 0,
+    defaultId: 1
+  })
+
+  if (result.response === 1) {
+    console.log('Borrando', item)
+    mainWindow.send('list-updated', store.deleteItem(item))
+    return true
+  }
+})
+
+//DIALOGO
+ipcMain.handle('show-dialog', async (event, { type, message }) => {
+  const win = BrowserWindow.getFocusedWindow()
+  await dialog.showMessageBox(win, {
+    type: type, // 'info', 'error', 'warning', etc.
+    message: message
+  })
+})
+
+// UPDATE ITEM
+ipcMain.on('store:update-item', (event, item) => {
+  mainWindow.send('list-updated', store.updateItem(item))
+})
+
+// CONFIRM ITEM
+ipcMain.handle('store:confirm-item', async (event, item) => {
+  const result = await dialog.showMessageBox(mainWindow, {
+    type: 'question',
+    title: `Hay cambios sin guardar`,
+    message: `¿Seguro que deseas descartar los cambios?`,
+    detail: 'Se perderán los cambios realizados en el producto.',
+    buttons: ['Cancelar', 'Guardar', 'Descartar'],
+    cancelId: 0,
+    defaultId: 2
+  })
+
+  switch (result.response) {
+    case 0:
+      return 'cancel'
+    case 1:
+      mainWindow.send('list-updated', store.updateItem(item))
+      return 'save'
+    case 2:
+      return 'discard'
+  }
+})
