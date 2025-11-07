@@ -73,7 +73,10 @@ export default function TaskEdit() {
                 }
               : null
           }
-          onClose={() => setDialog(null)}
+          onClose={() => {
+  if (dialog.onClose) dialog.onClose(); // <-- Ejecuta la navegación
+  setDialog(null); // Cierra el modal
+}}
         />
       )}
       <TaskForm
